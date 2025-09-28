@@ -18,6 +18,15 @@ type User struct{
 	PasswordHash string `json:"password"`
 }
 
+type Post struct {
+	PostId *string `json:"postId"`
+	PostContent string `json:"postContent"`
+	Username *string `json:"username"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+
 func NewUser(user RegisterUser) (User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err!= nil {

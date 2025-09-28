@@ -32,6 +32,8 @@ func main() {
 				return myApp.ApiHandler.LoginUser(request)
 			case "/protected":
 				return middleware.ValidateJWTMiddleware(middleware.Protectedhandler)(request)
+			case "/post":
+				return middleware.ValidateJWTMiddleware(myApp.ApiHandler.CreatePost)(request)
 			default: 
 				return events.APIGatewayProxyResponse{ 
 					Body:  "Not Found",

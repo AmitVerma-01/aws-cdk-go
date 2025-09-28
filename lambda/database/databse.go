@@ -1,23 +1,12 @@
 package database
 
 import (
-	"fmt"
-	types "lambda/type"
-
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-const Table_Name = "userTable"
-
-type UserStore interface {
-	DoesUserExist(username string) (bool, error)
-	InsertUser(user types.User) error
-	GetUser(username string) (types.User , error)
-}
-
+const User_Table_Name = "userTable"
+	
 type DynamoDBClient struct {
 	databasestore *dynamodb.DynamoDB
 }
@@ -30,68 +19,22 @@ func NewDynamoDBClient() *DynamoDBClient {
 	}
 }
 
-
-func (u DynamoDBClient) DoesUserExist(username string) (bool, error) {
-	result, err := u.databasestore.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(Table_Name),
-		Key: map[string]*dynamodb.AttributeValue{
-			"username": {
-				S: aws.String(username),
-			},
-		},
-	}) 
-	if err != nil {
-		return false, err
-	}
-	return result.Item != nil, nil
+type AllStore struct {
+	UserStore UserStore
+	PostStore PostStore
 }
 
-func (u DynamoDBClient) InsertUser (user types.User) error {
-	item := &dynamodb.PutItemInput{
-		TableName: aws.String(Table_Name),
-		Item: map[string]*dynamodb.AttributeValue{
-			"username": {
-				S: aws.String(user.Username),
-			},
-			"password": {
-				S: aws.String(user.PasswordHash),
-			},
-		},
+func NewAllStore(UserStore UserStore, PostStore PostStore) AllStore {
+	return AllStore{
+		UserStore: UserStore,
+		PostStore: PostStore,
 	}
-
-	_, err := u.databasestore.PutItem(item)
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func (u DynamoDBClient) GetUser(username string) (types.User , error) {
-	var user types.User
+// func (allstore AllStore) GetUserStore() UserStore {
+// 	return allstore.UserStore
+// }
 
-	result, err := u.databasestore.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(Table_Name),
-		Key: map[string]*dynamodb.AttributeValue{
-			"username": {
-				S: aws.String(username),
-			},
-		},
-	})
-
-	if err != nil {
-		return user, err
-	}
-
-	if result.Item == nil {
-		return user, fmt.Errorf("user not found")
-	}
-
-	err = dynamodbattribute.UnmarshalMap(result.Item, &user)
-
-	if err != nil {
-		return user, err
-	}
-
-	return user, nil
-}
+// func (allstore AllStore) GetPostStore() PostStore {
+// 	return allstore.PostStore
+// }

@@ -36,7 +36,10 @@ func ValidateJWTMiddleware(next func(request events.APIGatewayProxyRequest) (eve
 			}, nil
 		}
 
-		request.Headers["username"] = claims["user"].(string)
+		request.RequestContext.Authorizer = map[string]interface{}{
+			"user": claims["user"].(string),
+			// "role": claims["role"].(string),
+		}
 		return next(request)
 	}
 }

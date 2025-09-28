@@ -6,15 +6,16 @@ import (
 	"lambda/database"
 	types "lambda/type"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 )
 
 type APIHandler struct {
-	dbStore database.UserStore
+	dbStore database.AllStore
 }
 
-func NewApiHandler(dbstore database.UserStore) APIHandler {
+func NewApiHandler(dbstore database.AllStore) APIHandler {
 	return APIHandler{
 		dbStore: dbstore,
 	}
@@ -39,7 +40,7 @@ func (api APIHandler) RegisterUser(request events.APIGatewayProxyRequest) (event
 		}, nil
 	}
 
-	userExists, err := api.dbStore.DoesUserExist(registerUser.Username)
+	userExists, err := api.dbStore.UserStore.DoesUserExist(registerUser.Username)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			Body:       "failed to check if user exists",
@@ -63,7 +64,7 @@ func (api APIHandler) RegisterUser(request events.APIGatewayProxyRequest) (event
 	}
 
 
-	err = api.dbStore.InsertUser(user)
+	err = api.dbStore.UserStore.InsertUser(user)
 
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -95,7 +96,7 @@ func (api APIHandler) LoginUser(request events.APIGatewayProxyRequest) (events.A
 		}, nil
 	}
 
-	user , err := api.dbStore.GetUser(loginUser.Username)
+	user , err := api.dbStore.UserStore.GetUser(loginUser.Username)
 
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -123,6 +124,56 @@ func (api APIHandler) LoginUser(request events.APIGatewayProxyRequest) (events.A
 
 	return events.APIGatewayProxyResponse{
 		Body:       successMessaege,
+		StatusCode: http.StatusOK,
+	}, nil
+}
+
+func (api APIHandler) CreatePost(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	type Post struct {
+		PostContent string `json:"postContent"`
+	}
+	var post Post
+
+	err := json.Unmarshal([]byte(request.Body), &post)
+
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Body:       "Invalid Data",
+			StatusCode: http.StatusBadRequest,
+		}, nil
+	}
+
+	if post.PostContent == "" {
+		return events.APIGatewayProxyResponse{
+			Body:       "post content is empty",
+			StatusCode: http.StatusBadRequest,
+		}, nil
+	}
+
+	username := request.RequestContext.Authorizer["user"].(string)
+	if username == "" {
+		return events.APIGatewayProxyResponse{
+			Body:       "username is empty",
+			StatusCode: http.StatusBadRequest,
+		}, nil
+	}
+
+	err = api.dbStore.PostStore.InsertPost(types.Post{
+		PostContent: post.PostContent,
+		Username: &username,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+
+	if err != nil {	
+		return events.APIGatewayProxyResponse{
+			Body:       "failed to insert post",
+			StatusCode: http.StatusInternalServerError,
+		}, nil
+	}
+
+	return events.APIGatewayProxyResponse{
+		Body:       "Post created successfully",
 		StatusCode: http.StatusOK,
 	}, nil
 }

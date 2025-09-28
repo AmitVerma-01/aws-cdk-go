@@ -36,6 +36,13 @@ func NewGoRevisionStack(scope constructs.Construct, id string, props *GoRevision
 		},
 		TableName:  jsii.String("userTable"),
 	})
+	postTable := awsdynamodb.NewTable(stack, jsii.String("postTable"), &awsdynamodb.TableProps{
+		PartitionKey: &awsdynamodb.Attribute{
+			Name:  jsii.String("postId"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		TableName:  jsii.String("postTable"),
+	})
 
 	myFunction := awslambda.NewFunction(stack, jsii.String("GoRevisionHandler"), &awslambda.FunctionProps{
 		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
@@ -43,6 +50,7 @@ func NewGoRevisionStack(scope constructs.Construct, id string, props *GoRevision
 		Code:    awslambda.Code_FromAsset(jsii.String("lambda/function.zip"), nil),
 	})
 	table.GrantReadWriteData(myFunction)
+	postTable.GrantReadWriteData(myFunction)
 
 	myApiGateway := awsapigateway.NewRestApi(stack, jsii.String("myAIPGateway"), &awsapigateway.RestApiProps{
 		DefaultCorsPreflightOptions : &awsapigateway.CorsOptions{
@@ -62,6 +70,8 @@ func NewGoRevisionStack(scope constructs.Construct, id string, props *GoRevision
 	loginResource.AddMethod(jsii.String("POST"), integration, nil)
 	protectedResource := myApiGateway.Root().AddResource(jsii.String("protected"), nil)
 	protectedResource.AddMethod(jsii.String("GET"), integration, nil)
+	postResource := myApiGateway.Root().AddResource(jsii.String("post"), nil)
+	postResource.AddMethod(jsii.String("POST"), integration, nil)
 	return stack 
 }
 
