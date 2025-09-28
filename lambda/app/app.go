@@ -6,7 +6,7 @@ import (
 )
 
 type App struct {
-	apiHandler api.APIHandler
+	ApiHandler api.APIHandler
 }
 
 func NewApp() App {
@@ -15,6 +15,6 @@ func NewApp() App {
 	apiHandler := api.NewApiHandler(*db)
 
 	return App{
-		apiHandler: apiHandler,
+		ApiHandler: apiHandler,
 	}
 }

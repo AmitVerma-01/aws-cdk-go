@@ -1,6 +1,6 @@
 module go_revision
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.217.0
@@ -20,6 +20,6 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
 )
